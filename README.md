@@ -5,7 +5,7 @@ His film, his toolkit and his method are the foundation of everything here: the 
 the voxel and debris systems, the render runner, the grade and the mixer are his work, used under his MIT licence.
 Start with his repo and his README. This repo only adds what is new, and never repeats what his already explains.
 
-Extended by **Ai.chemyst**, with Claude Code.
+Extended by **Ai.chemyst**, with Claude Code. Opus 5.5 medium. with suno ai v6mini and a few hand edits on slow mo and adding the track. otherwise mostly claude. and quiete a few steers for taste and bug fixes. 
 
 ## Watch or download
 
