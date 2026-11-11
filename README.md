@@ -9,6 +9,10 @@ Extended by **Ai.chemyst**, with Claude Code.
 
 ## Watch or download
 
+https://github.com/user-attachments/assets/37eeedb4-e6dc-4b26-89ab-a1c6e23d6922
+
+Play the 720p viewing copy above, or download the original 1080p file below.
+
 [Download the personal showcase (1080p MP4, 147 MB)](https://github.com/distilaition-lab/escapement-extended-clean/releases/download/v6/ESCAPEMENT_EXTENDED_SHOWCASE.mp4)
 or open the [v6 release](https://github.com/distilaition-lab/escapement-extended-clean/releases/tag/v6).
 GitHub's "Source code" ZIP contains the code; the MP4 is a separate release download.
