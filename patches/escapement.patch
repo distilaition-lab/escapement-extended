@@ -1,0 +1,84 @@
+diff --git a/lib/act2lib.py b/lib/act2lib.py
+index 63e1c12..f2f71a1 100644
+--- a/lib/act2lib.py
++++ b/lib/act2lib.py
+@@ -779,7 +779,9 @@ VOX = dict(t0=10.0, v=1.0, acc=0.07, A=11.0, sink=(DOOR[0] + 1.5, SY0 - 10.0, 1.
+ 
+ 
+ def _gn_debris_group(name, cube, origin, seed, mat, burst=1.5, up=1.0, turbk=1.2, big=0.15, keep=None, keep_t=20.0,
+-                     avoid=None, cull_y=SY0 - 6.0, thin=0.0):
++                     avoid=None, cull_y=SY0 - 6.0, thin=0.0, cull_z=-0.25, clamp_ground=True, tscale=1.0):
++    # cull_z / clamp_ground: continuation addition (defaults = their 2G). A breach of a ground plane needs shards
++    # that fall THROUGH their rest level (clamp_ground=False) and are culled far below it (cull_z).
+     t0, v, acc, A, sink = VOX['t0'], VOX['v'], VOX['acc'], VOX['A'], VOX['sink']
+     ng = bpy.data.node_groups.new(name, 'GeometryNodeTree')
+     ng.interface.new_socket('Geometry', in_out='INPUT', socket_type='NodeSocketGeometry')
+@@ -859,7 +861,7 @@ def _gn_debris_group(name, cube, origin, seed, mat, burst=1.5, up=1.0, turbk=1.2
+         ky = m('LESS_THAN', m('ABSOLUTE', m('SUBTRACT', pz[1], keep[2])), keep[3])
+         kk = m('MULTIPLY', kx, ky)
+         tr = m('ADD', m('MULTIPLY', tr, m('SUBTRACT', 1.0, kk)), m('MULTIPLY', m('ADD', keep_t, rnd(0.0, 3.0, seed + 3)), kk))
+-    t = m('DIVIDE', m('MAXIMUM', m('SUBTRACT', frame, tr), 0.0), 24.0)
++    t = m('DIVIDE', m('MAXIMUM', m('SUBTRACT', frame, tr), 0.0), 24.0 / tscale)   # tscale < 1: slow motion
+     rel = m('GREATER_THAN', t, 0.0)
+     away = vm('NORMALIZE', vm('SUBTRACT', pos, tuple(origin)))
+     sd = vm('NORMALIZE', vm('MULTIPLY', vm('SUBTRACT', tuple(sink), pos), (0.35, 1.0, 0.22)))
+@@ -879,7 +881,7 @@ def _gn_debris_group(name, cube, origin, seed, mat, burst=1.5, up=1.0, turbk=1.2
+     np_ = vm('ADD', pos, off)
+     nps = sep(np_)
+     zg = m('MINIMUM', pz[2], 0.0)                       # ground: the chunk's own rest level for floor tiles
+-    zc = m('MAXIMUM', nps[2], zg)
++    zc = m('MAXIMUM', nps[2], zg) if clamp_ground else nps[2]
+     if keep:
+         zc = m('ADD', m('MULTIPLY', zc, m('SUBTRACT', 1.0, kk)), m('MULTIPLY', nps[2], kk))
+     newp = comb(nps[0], nps[1], zc)
+@@ -938,7 +940,7 @@ def _gn_debris_group(name, cube, origin, seed, mat, burst=1.5, up=1.0, turbk=1.2
+     dele = node('GeometryNodeDeleteGeometry', domain='INSTANCE')
+     Lk.new(iop.outputs[0], dele.inputs['Geometry'])
+     cy = m('LESS_THAN', nps[1], cull_y)
+-    cz = m('LESS_THAN', nps[2], -0.25)
++    cz = m('LESS_THAN', nps[2], cull_z)
+     far = m('GREATER_THAN', vm('DISTANCE', np_, pos), 70.0)
+     kill = m('MAXIMUM', m('MAXIMUM', cy, cz), far)
+     if thin > 0:
+diff --git a/lib/common.py b/lib/common.py
+index 27abf97..108d150 100644
+--- a/lib/common.py
++++ b/lib/common.py
+@@ -984,6 +984,11 @@ def arg(name, default=None, cast=str):
+ 
+ def finish(shot):
+     sc = bpy.context.scene
++    probe_out = arg('--probe', None)
++    if probe_out:          # gate scene probe: physical-plausibility facts, no rendering (continuation/probe.py)
++        import probe
++        probe.run(shot, str(probe_out))
++        return
+     samples = arg('--samples', None, int)
+     if samples:
+         sc.eevee.taa_render_samples = samples
+diff --git a/tools/mix.py b/tools/mix.py
+--- a/tools/mix.py
++++ b/tools/mix.py
+@@ -25,5 +25,7 @@
+     if p not in _cache:
+-        raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', p, '-f', 'f32le', '-ac', '2', '-ar', str(sr), '-'],
+-                             capture_output=True).stdout
+-        _cache[p] = np.frombuffer(raw, dtype=np.float32).reshape(-1, 2).copy()
++        decoded = subprocess.run(['ffmpeg', '-v', 'error', '-i', p, '-f', 'f32le', '-ac', '2', '-ar', str(sr), '-'],
++                                 capture_output=True)
++        if decoded.returncode or not decoded.stdout:
++            sys.exit(f'[mix] cannot decode {path}: {decoded.stderr.decode(errors="replace").strip()}')
++        _cache[p] = np.frombuffer(decoded.stdout, dtype=np.float32).reshape(-1, 2).copy()
+     return _cache[p].copy()
+@@ -133,2 +135,6 @@
+     C = json.load(open(cues_path))
++    sources = {entry['file'] for key in ('music', 'cues') for entry in C.get(key, [])}
++    missing = sorted(path for path in sources if not os.path.isfile(os.path.join(FILM, path)))
++    if missing:
++        sys.exit('[mix] missing required audio files (relative to film):\n  ' + '\n  '.join(missing))
+     sr = C.get('sr', 48000)
+@@ -204,2 +210,4 @@
+     p.communicate((pcm << 8).astype(np.int32).tobytes())
++    if p.returncode:
++        sys.exit(f'[mix] FFmpeg failed to write {out} (exit {p.returncode})')
+     pk = np.abs(mix).max()
