@@ -9,8 +9,8 @@ Extended by **Ai.chemyst**, with Claude Code.
 
 ## Watch or download
 
-[Download the personal showcase (1080p MP4, 147 MB)](https://github.com/distilaition-lab/escapement-extended/releases/download/v6/ESCAPEMENT_EXTENDED_SHOWCASE.mp4)
-or open the [v6 release](https://github.com/distilaition-lab/escapement-extended/releases/tag/v6).
+[Download the personal showcase (1080p MP4, 147 MB)](https://github.com/distilaition-lab/escapement-extended-clean/releases/download/v6/ESCAPEMENT_EXTENDED_SHOWCASE.mp4)
+or open the [v6 release](https://github.com/distilaition-lab/escapement-extended-clean/releases/tag/v6).
 GitHub's "Source code" ZIP contains the code; the MP4 is a separate release download.
 
 The viewing edit is about **86 seconds**. Ai.chemyst added **"Wall of Sound"**, made with Suno on its free plan,
@@ -76,7 +76,7 @@ The tested setup is Windows with Git, Blender 5.2, and both `ffmpeg` and `ffprob
 Run these commands in PowerShell from a folder where you want to install the project:
 
 ```powershell
-git clone https://github.com/distilaition-lab/escapement-extended.git
+git clone https://github.com/distilaition-lab/escapement-extended-clean.git escapement-extended
 Set-Location escapement-extended
 git clone --branch v1.0 https://github.com/Leonxlnx/escapement.git film
 git -C film apply --check ../patches/escapement.patch
